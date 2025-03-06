@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import vttp.lecture.csf_36l.models.Post;
 import vttp.lecture.csf_36l.repository.FileUploadRepository;
+import vttp.lecture.csf_36l.service.S3Service;
 
 
 
@@ -25,12 +26,20 @@ public class FileUploadController {
     @Autowired
     private FileUploadRepository fileUploadRepository;
 
+    @Autowired
+    private S3Service s3Service;
+
     @PostMapping(path="/api/upload", consumes=MediaType.MULTIPART_FORM_DATA_VALUE, produces=MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> upload(@RequestPart("file") MultipartFile file, @RequestPart("comments") String comments
     ) {
         try {
 
             String id = fileUploadRepository.upload(file, comments);
+
+            if (id != null && !id.isEmpty()) {
+                String s3endpointUrl = this.s3Service.upload(file, comments, id);
+            }
+
             return ResponseEntity.ok()
                 .body("{\"id\": \"%s\"}".formatted(id));
             
